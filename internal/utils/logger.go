@@ -48,7 +48,7 @@ func (l *logger) getFields(ctx context.Context, fields Fields) []zap.Field {
 	for key, value := range fields {
 		// Exclude sensitive fields from logging
 		switch key {
-		case "authorization", "secret", "api_key":
+		case "authorization", "secret", "client_id":
 			continue
 		}
 

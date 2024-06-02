@@ -13,8 +13,8 @@ import (
 func AuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		var (
-			requireSecret bool
-			requireAPiKey bool
+			requireSecret   bool
+			requireClientID bool
 		)
 
 		// Skip if method if registration
@@ -22,19 +22,22 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
 		switch x[len(x)-1] {
 		case "CreateAccount":
 			requireSecret = false
-			requireAPiKey = false
+			requireClientID = false
 		case "GenerateCredentials":
 			requireSecret = false
-			requireAPiKey = true
+			requireClientID = true
+		case "RequestOTP", "VerifyOTP":
+			requireSecret = true
+			requireClientID = true
 		}
 
 		md, _ := metadata.FromIncomingContext(ctx)
-		secret := md.Get("secret")
-		apiKey := md.Get("api_key")
+		secret := md.Get("secret_key")
+		clientID := md.Get("client_id")
 
-		if requireAPiKey {
-			if apiKey == nil {
-				return nil, errors.ErrMissingAPIKey
+		if requireClientID {
+			if clientID == nil {
+				return nil, errors.ErrMissingClientID
 			}
 		}
 
@@ -43,6 +46,9 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
 				return nil, errors.ErrMissingSecret
 			}
 		}
+
+		ctx = context.WithValue(ctx, `secretKey`, secret)
+		ctx = context.WithValue(ctx, "clientID", clientID)
 
 		m, err := handler(ctx, req)
 		if err != nil {

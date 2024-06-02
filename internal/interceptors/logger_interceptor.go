@@ -19,7 +19,7 @@ func ServerLogInterceptor(logger utils.Logger) grpc.UnaryServerInterceptor {
 		md, _ := metadata.FromIncomingContext(ctx)
 		delete(md, "authorization")
 		delete(md, "secret_key")
-		delete(md, "api_key")
+		delete(md, "client_id")
 		
 		logger.Debug(ctx, "", utils.Fields{"method": info.FullMethod, "metadata": md, "trace_id": traceID})
 		// logger.Info(ctx, "", utils.Fields{"method": info.FullMethod, "metadata": md, "trace_id": traceID})

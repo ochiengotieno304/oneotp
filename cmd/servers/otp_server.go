@@ -23,45 +23,50 @@ func NewOTPServer() *otpServer {
 	return &otpServer{}
 }
 
-var authStore = stores.NewAuthStore()
+var otpStore = stores.NewOTPStore()
 
 func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (*pb.RequestOTPResponse, error) {
 	phone := req.GetPhone()
 	otp := strings.Join(utils.GenerateOTP(), "")
 	after := time.Now().Add(15 * time.Minute)
+	var clientID []string = ctx.Value("clientID").([]string)
 
-	otpID, err := authStore.CreateOTP(&models.OTP{Code: otp, Phone: phone, ExpiresAt: after, Used: false})
+	otpID, err := otpStore.CreateOTP(&models.OTP{
+		Code:      utils.Encrypt(otp),
+		Phone:     utils.Encrypt(phone),
+		ExpiresAt: after,
+		Used:      false,
+		ClientID:  clientID[0],
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	message := fmt.Sprintf("Beba OTP is %s, expiry in 15 minutes", otp)
+	message := fmt.Sprintf("Your OTP code is %s, valid 15 minutes", otp) // send verification sms
 
 	go sms.SendSMS(message, phone)
 
 	return &pb.RequestOTPResponse{
-		Otp: &pb.OTP{
-			Code: otp,
-			Id:   fmt.Sprintf("%v", otpID.(primitive.ObjectID).Hex()),
-		},
+		Id: fmt.Sprintf("%v", otpID.(primitive.ObjectID).Hex()),
 	}, nil
 
 }
 
 func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
 	phone := req.GetPhone()
-	otpID := req.GetOtp().GetId()
-	otpCode := req.GetOtp().GetCode()
+	otpID := req.GetId()
+	otpCode := req.GetCode()
 	var reason string
 
-	otp, err := authStore.FindOne(otpID)
+	otp, err := otpStore.FindOne(otpID)
 	if err != nil {
 		return nil, err
 	}
 
 	verifyExpired := time.Now().Before(otp.ExpiresAt)
-	verifyCode := otpCode == otp.Code
-	verifyPhone := phone == otp.Phone
+	verifyCode := otpCode == utils.Decrypt(otp.Code)
+	verifyPhone := phone == utils.Decrypt(otp.Phone)
 	verifyUsed := otp.Used
 
 	if !verifyExpired {
@@ -75,7 +80,7 @@ func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*p
 	}
 
 	if !verifyUsed {
-		err = authStore.UpdateOne(otpID)
+		err = otpStore.UpdateOne(otpID)
 		if err != nil {
 			return nil, err
 		}

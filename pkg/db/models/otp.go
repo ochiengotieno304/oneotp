@@ -8,4 +8,5 @@ type OTP struct {
 	Code      string    `bson:"code,omitempty"`
 	Used      bool      `bson:"used,omitempty"`
 	ExpiresAt time.Time `bson:"expires_at,omitempty"`
+	ClientID  string    `bson:"client_id,omitempty"`
 }

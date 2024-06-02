@@ -16,17 +16,17 @@ type AuthStore interface {
 	UpdateOne(id string) error
 }
 
-type authStore struct {
+type otpStore struct {
 	collection *mongo.Collection
 }
 
-func NewAuthStore() AuthStore {
-	return &authStore{
+func NewOTPStore() AuthStore {
+	return &otpStore{
 		collection: db.MongoClient().Collection("otp"),
 	}
 }
 
-func (store *authStore) CreateOTP(otp *models.OTP) (interface{}, error) {
+func (store *otpStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 	result, err := store.collection.InsertOne(
 		context.TODO(),
 		bson.D{
@@ -34,6 +34,7 @@ func (store *authStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 			{Key: "code", Value: otp.Code},
 			{Key: "expires_at", Value: otp.ExpiresAt},
 			{Key: "used", Value: otp.Used},
+			{Key: "client_id", Value: otp.ClientID},
 		},
 	)
 
@@ -44,7 +45,7 @@ func (store *authStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 	return result.InsertedID, nil
 }
 
-func (store *authStore) FindOne(id string) (*models.OTP, error) {
+func (store *otpStore) FindOne(id string) (*models.OTP, error) {
 	var otp *models.OTP
 
 	objID, err := primitive.ObjectIDFromHex(id)
@@ -65,7 +66,7 @@ func (store *authStore) FindOne(id string) (*models.OTP, error) {
 	return otp, nil
 }
 
-func (store *authStore) UpdateOne(id string) error { // update only used state
+func (store *otpStore) UpdateOne(id string) error { // update only used state
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err

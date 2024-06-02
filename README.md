@@ -1,4 +1,4 @@
-## Beba API Reference
+## oneotp API Reference
 
 #### Register Account
 
