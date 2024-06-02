@@ -5,6 +5,8 @@ import (
 	"net"
 
 	"github.com/ochiengotieno304/oneotp/cmd/servers"
+	"github.com/ochiengotieno304/oneotp/internal/interceptors"
+	"github.com/ochiengotieno304/oneotp/internal/utils"
 	"github.com/ochiengotieno304/oneotp/pkg/pb"
 
 	"google.golang.org/grpc"
@@ -18,13 +20,19 @@ func main() {
 	}
 
 	accountServer := servers.NewAccountServer()
-	authServer := servers.NewAuthServer()
+	otpServer := servers.NewOTPServer()
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.AuthInterceptor(),
+			interceptors.ServerLogInterceptor(utils.InitLogger()),
+		),
+	)
+
 	reflection.Register(s)
 
 	pb.RegisterAccountServiceServer(s, accountServer)
-	pb.RegisterAuthServiceServer(s, authServer)
+	pb.RegisterOTPServiceServer(s, otpServer)
 
 	log.Println("Serving gRPC on 0.0.0.0:6000")
 	log.Fatalln(s.Serve(lis))

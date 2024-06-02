@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Blog Alert</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        a:link {
+            color: white;
+            background-color: transparent;
+            text-decoration: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #183637;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+       
+
+        .body p {
+            font-size: 15px;
+        }
+
+
+        .btn:hover {
+            background-color: #027c72;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px;
+            }
+        }
+    </style>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <img src='https://res.cloudinary.com/hico/image/upload/v1704021173/afro-futuristic_kserld.png' height='200'
+            width='600'>
+
+        <h1>{{title}}</h1>
+        <p>{{body}}</p>
+        <p>Thank you for staying connected with us!</p>
+        <p>Sent with 💚, <br>Afro Futuristic Team</p>
+        <p style="text-align: center;">
+            <a class="btn" href="https://www.yourblog.com/full-blog-post-link">Read More</a>
+        </p>
+    </div>
+</body>
+
+</html>

@@ -9,11 +9,10 @@ option go_package = "./pb";
 message Account {
   string id = 1;
   string name = 2;
-  string phone = 3;
+  optional string phone = 3;
   string password = 4;
-  string email = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  string alt_password = 5;
+  string email = 6;
 }
 
 message CreateAccountRequest {
@@ -21,13 +20,103 @@ message CreateAccountRequest {
 }
 
 message CreateAccountResponse {
+  string access_token = 1;
+}
+
+message DeleteAccountRequest {
+  string id = 1;
+}
+
+message DeleteAccountResponse {
+  string id = 1;
+}
+
+message GetAccountRequest {
+  string id = 1;
+}
+
+message GetAccountResponse {
   Account account = 1;
+}
+
+message GenerateCredentialsRequest {
+  string account_id = 1;
+}
+
+message GenerateCredentialsResponse {
+  string api_key = 1;
+  string secret = 2;
+}
+
+message UpdateAccountRequest {
+  string id = 1;
+  Account account = 2;
+}
+
+message UpdateAccountResponse {
+  Account account = 1;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+}
+
+message LogoutRequest {
+  string access_token = 1;
+}
+
+message LogoutResponse {
+  string message = 1;
 }
 
 service AccountService {
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {
     option (google.api.http) = {
       post: "/v1/account"
+      body: "*"
+    };
+  }
+
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+    option (google.api.http) = {
+      delete: "/v1/account/{id}"
+    };
+  }
+
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/{id}"
+    };
+  }
+
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {
+    option (google.api.http) = {
+      put: "/v1/account/{id}"
+      body: "*"
+    };
+  }
+
+  rpc GenerateCredentials(GenerateCredentialsRequest) returns (GenerateCredentialsResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/{account_id}/credentials"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/login"
+      body: "*"
+    };
+  }
+
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/logout"
       body: "*"
     };
   }

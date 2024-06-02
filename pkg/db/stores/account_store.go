@@ -2,18 +2,21 @@ package stores
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/ochiengotieno304/oneotp/pkg/db"
 	"github.com/ochiengotieno304/oneotp/pkg/db/models"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AccountStore interface {
-	CreateAccount(account *models.Account) error
+	CreateAccount(account *models.Account) (interface{}, error)
 	FindOneAccount(phone string) (*models.Account, error)
 	UpdateOneAccount(account *models.Account) error
+	DeleteOneAccount(id string) error
 }
 
 type accountStore struct {
@@ -26,28 +29,30 @@ func NewAccountStore() AccountStore {
 	}
 }
 
-func (store *accountStore) CreateAccount(account *models.Account) error {
+func (store *accountStore) CreateAccount(account *models.Account) (interface{}, error) {
 	result, err := store.collection.InsertOne(
 		context.TODO(),
 		bson.D{
 			{Key: "name", Value: account.Name},
 			{Key: "phone", Value: account.Phone},
 			{Key: "email", Value: account.Email},
+			{Key: "password_hash", Value: account.PasswordHash},
+			{Key: "created_at", Value: time.Now()},
+			{Key: "updated_at", Value: time.Now()},
+			{Key: "status", Value: 100},
 		},
 	)
 
-	fmt.Println(result.InsertedID)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return result.InsertedID, nil
 }
 
-func (store *accountStore) FindOneAccount(phone string) (*models.Account, error) {
+func (store *accountStore) FindOneAccount(email string) (*models.Account, error) {
 	var account *models.Account
-	filter := bson.D{{Key: "phone", Value: phone}}
+	filter := bson.D{{Key: "email", Value: email}}
 	err := store.collection.FindOne(context.TODO(), filter).Decode(&account)
 	if err != nil {
 		return nil, err
@@ -63,12 +68,29 @@ func (store *accountStore) UpdateOneAccount(account *models.Account) error {
 		{Key: "email", Value: account.Email},
 	}}}
 
-	result, err := store.collection.UpdateOne(context.TODO(), filter, update)
+	_, err := store.collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(result.UpsertedID)
+	return nil
+}
+
+func (store *accountStore) DeleteOneAccount(id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: objID}}
+	_, err = store.collection.DeleteOne(
+		context.TODO(),
+		filter,
+	)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

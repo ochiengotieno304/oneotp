@@ -15,17 +15,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type authServer struct {
-	pb.UnimplementedAuthServiceServer
+type otpServer struct {
+	pb.UnimplementedOTPServiceServer
 }
 
-func NewAuthServer() *authServer {
-	return &authServer{}
+func NewOTPServer() *otpServer {
+	return &otpServer{}
 }
 
 var authStore = stores.NewAuthStore()
 
-func (s *authServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (*pb.RequestOTPResponse, error) {
+func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (*pb.RequestOTPResponse, error) {
 	phone := req.GetPhone()
 	otp := strings.Join(utils.GenerateOTP(), "")
 	after := time.Now().Add(15 * time.Minute)
@@ -48,7 +48,7 @@ func (s *authServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) 
 
 }
 
-func (s *authServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
+func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
 	phone := req.GetPhone()
 	otpID := req.GetOtp().GetId()
 	otpCode := req.GetOtp().GetCode()
