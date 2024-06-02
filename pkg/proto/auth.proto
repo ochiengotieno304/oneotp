@@ -1,0 +1,68 @@
+syntax="proto3";
+
+package auth.proto;
+
+import "google/api/annotations.proto";
+
+option go_package = "./pb";
+
+message OTP {
+  string code = 1;
+  string id = 2;
+}
+
+message RequestOTPRequest {
+  string phone = 1;
+}
+
+message RequestOTPResponse {
+  OTP otp = 1;
+}
+
+message VerifyOTPRequest {
+  string phone = 1;
+  OTP otp = 2;
+}
+
+message VerifyOTPResponse {
+  bool success = 1;
+  string reason = 2;
+}
+
+message LoginRequest {
+  string phone = 1;
+}
+
+message LoginResponse {
+  string OTP = 1;
+}
+
+service AuthService {
+  rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/request-otp"
+      body: "*"
+    };
+  }
+
+  rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/verify-otp"
+      body: "*"
+    };
+  }
+
+  rpc ResendOTP(RequestOTPRequest) returns (RequestOTPResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/resend-otp"
+      body: "*"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth"
+      body: "*"
+    };
+  }
+}
