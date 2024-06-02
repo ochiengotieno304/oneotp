@@ -7,6 +7,7 @@ import (
 
 	"github.com/ochiengotieno304/oneotp/internal/helpers/auth"
 	"github.com/ochiengotieno304/oneotp/internal/helpers/email"
+	"github.com/ochiengotieno304/oneotp/internal/utils"
 	"github.com/ochiengotieno304/oneotp/pkg/db/models"
 	"github.com/ochiengotieno304/oneotp/pkg/db/stores"
 	"github.com/ochiengotieno304/oneotp/pkg/pb"
@@ -79,5 +80,27 @@ func (s *accountServer) CreateAccount(ctx context.Context, req *pb.CreateAccount
 
 	return &pb.CreateAccountResponse{
 		AccessToken: accessToken,
+	}, nil
+}
+
+func (s *accountServer) GenerateCredentials(ctx context.Context, req *pb.GenerateCredentialsRequest) (*pb.GenerateCredentialsResponse, error) {
+	secretKey := auth.GenerateSecretKey()
+	accountID := req.GetAccountId()
+
+	account := &models.Account{
+		ID: accountID,
+		Credentials: models.Credentials{
+			SecretKey: utils.Encrypt(secretKey),
+		},
+	}
+
+	err := accountStore.UpdateAccountCredentials(account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GenerateCredentialsResponse{
+		ApiKey: accountID,
+		SecretKey: secretKey,
 	}, nil
 }

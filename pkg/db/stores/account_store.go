@@ -15,7 +15,7 @@ import (
 type AccountStore interface {
 	CreateAccount(account *models.Account) (interface{}, error)
 	FindOneAccount(phone string) (*models.Account, error)
-	UpdateOneAccount(account *models.Account) error
+	UpdateAccountCredentials(account *models.Account) error
 	DeleteOneAccount(id string) error
 }
 
@@ -61,14 +61,24 @@ func (store *accountStore) FindOneAccount(email string) (*models.Account, error)
 	return account, nil
 }
 
-func (store *accountStore) UpdateOneAccount(account *models.Account) error {
-	filter := bson.D{{Key: "phone", Value: account.Phone}}
+func (store *accountStore) UpdateAccountCredentials(account *models.Account) error {
+	objID, err := primitive.ObjectIDFromHex(account.ID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "name", Value: account.Name},
-		{Key: "email", Value: account.Email},
+		{Key: "credentials", Value: bson.D{{
+			Key: "secret_key", Value: account.Credentials.SecretKey,
+		}}},
 	}}}
 
-	_, err := store.collection.UpdateOne(context.TODO(), filter, update)
+	_, err = store.collection.UpdateOne(
+		context.TODO(),
+		filter,
+		update,
+	)
 	if err != nil {
 		return err
 	}

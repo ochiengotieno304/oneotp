@@ -45,7 +45,7 @@ message GenerateCredentialsRequest {
 
 message GenerateCredentialsResponse {
   string api_key = 1;
-  string secret = 2;
+  string secret_key = 2;
 }
 
 message UpdateAccountRequest {
