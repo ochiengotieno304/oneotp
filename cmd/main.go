@@ -12,10 +12,11 @@ import (
 )
 
 func main() {
-	lis, err := net.Listen("tcp", ":5000")
+	lis, err := net.Listen("tcp", ":6000")
 	if err != nil {
 		log.Fatalln("Failed to listen:", err)
 	}
+
 	accountServer := servers.NewAccountServer()
 	authServer := servers.NewAuthServer()
 

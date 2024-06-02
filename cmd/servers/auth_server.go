@@ -30,7 +30,7 @@ func (s *authServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) 
 	otp := strings.Join(utils.GenerateOTP(), "")
 	after := time.Now().Add(15 * time.Minute)
 
-	otpID, err := authStore.CreateOTP(&models.OTP{Code: otp, Phone: phone, ExpiresAt: after})
+	otpID, err := authStore.CreateOTP(&models.OTP{Code: otp, Phone: phone, ExpiresAt: after, Used: false})
 	if err != nil {
 		return nil, err
 	}
@@ -62,17 +62,27 @@ func (s *authServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*
 	verifyExpired := time.Now().Before(otp.ExpiresAt)
 	verifyCode := otpCode == otp.Code
 	verifyPhone := phone == otp.Phone
+	verifyUsed := otp.Used
 
 	if !verifyExpired {
 		reason = "verification code expired"
+	} else if verifyUsed {
+		reason = "code already used"
 	} else if !verifyPhone || !verifyCode {
 		reason = "invalid verification code provided"
 	} else {
 		reason = "none"
 	}
 
+	if !verifyUsed {
+		err = authStore.UpdateOne(otpID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &pb.VerifyOTPResponse{
-		Success: verifyExpired && verifyCode && verifyPhone,
+		Success: verifyExpired && verifyCode && verifyPhone && !verifyUsed,
 		Reason:  reason,
 	}, nil
 }

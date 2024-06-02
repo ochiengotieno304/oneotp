@@ -13,6 +13,7 @@ import (
 type AuthStore interface {
 	CreateOTP(otp *models.OTP) (interface{}, error)
 	FindOne(id string) (*models.OTP, error)
+	UpdateOne(id string) error
 }
 
 type authStore struct {
@@ -32,6 +33,7 @@ func (store *authStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 			{Key: "phone", Value: otp.Phone},
 			{Key: "code", Value: otp.Code},
 			{Key: "expires_at", Value: otp.ExpiresAt},
+			{Key: "used", Value: otp.Used},
 		},
 	)
 
@@ -61,4 +63,26 @@ func (store *authStore) FindOne(id string) (*models.OTP, error) {
 	}
 
 	return otp, nil
+}
+
+func (store *authStore) UpdateOne(id string) error { // update only used state
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: objID}}
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "used", Value: true},
+		}},
+	}
+
+	_, err = store.collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
