@@ -1,4 +1,4 @@
-## Beba API Reference
+## oneotp API Reference
 
 #### Register Account
 
@@ -17,17 +17,14 @@
 ```json
   {
     "name": "test name",
-    "phone": "+254700001234",
+    "email": "+example@email.com",
   }
 ```
 
 ##### response
 ```json
   {
-    "name": "test name",
-    "phone": "+254700001234",
-    "token": "token",
-    "secret": "secret"
+    "access_token": "token",
   }
 ```
 

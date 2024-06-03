@@ -1,6 +1,6 @@
 syntax="proto3";
 
-package auth.proto;
+package otp.proto;
 
 import "google/api/annotations.proto";
 
@@ -16,12 +16,13 @@ message RequestOTPRequest {
 }
 
 message RequestOTPResponse {
-  OTP otp = 1;
+  string ref = 1;
 }
 
 message VerifyOTPRequest {
-  string phone = 1;
-  OTP otp = 2;
+  string ref = 1;  
+  string code = 2;
+  string phone = 3;
 }
 
 message VerifyOTPResponse {
@@ -29,15 +30,7 @@ message VerifyOTPResponse {
   string reason = 2;
 }
 
-message LoginRequest {
-  string phone = 1;
-}
-
-message LoginResponse {
-  string OTP = 1;
-}
-
-service AuthService {
+service OTPService {
   rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
     option (google.api.http) = {
       post: "/v1/auth/request-otp"
@@ -55,13 +48,6 @@ service AuthService {
   rpc ResendOTP(RequestOTPRequest) returns (RequestOTPResponse) {
     option (google.api.http) = {
       post: "/v1/auth/resend-otp"
-      body: "*"
-    };
-  }
-
-  rpc Login(LoginRequest) returns (LoginResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth"
       body: "*"
     };
   }

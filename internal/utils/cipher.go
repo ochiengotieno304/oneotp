@@ -3,80 +3,63 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
-	"fmt"
+	"encoding/base64"
+	"os"
 )
 
-var (
-	// We're using a 32 byte long secret key.
-	// This is probably something you generate first
-	// then put into and environment variable.
-	secretKey string = ""
-)
+var bytes = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
 
-func encrypt(plaintext string) string {
-	aes, err := aes.NewCipher([]byte(secretKey))
+var secretKey string = os.Getenv("ENCRYPTION_KEY")
+
+func encode(b []byte) string {
+	return base64.StdEncoding.EncodeToString(b)
+}
+func decode(s string) []byte {
+	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		panic(err)
 	}
-
-	gcm, err := cipher.NewGCM(aes)
-	if err != nil {
-		panic(err)
-	}
-
-	// We need a 12-byte nonce for GCM (modifiable if you use cipher.NewGCMWithNonceSize())
-	// A nonce should always be randomly generated for every encryption.
-	nonce := make([]byte, gcm.NonceSize())
-	_, err = rand.Read(nonce)
-	if err != nil {
-		panic(err)
-	}
-
-	// ciphertext here is actually nonce+ciphertext
-	// So that when we decrypt, just knowing the nonce size
-	// is enough to separate it from the ciphertext.
-	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-
-	return string(ciphertext)
+	return data
 }
 
-func decrypt(ciphertext string) string {
-	aes, err := aes.NewCipher([]byte(secretKey))
+// Encrypt method is to encrypt or hide any classified text
+func Encrypt(text string) (string, error) {
+	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-
-	gcm, err := cipher.NewGCM(aes)
-	if err != nil {
-		panic(err)
-	}
-
-	// Since we know the ciphertext is actually nonce+ciphertext
-	// And len(nonce) == NonceSize(). We can separate the two.
-	nonceSize := gcm.NonceSize()
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-
-	plaintext, err := gcm.Open(nil, []byte(nonce), []byte(ciphertext), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(plaintext)
+	plainText := []byte(text)
+	cfb := cipher.NewCFBEncrypter(block, bytes)
+	cipherText := make([]byte, len(plainText))
+	cfb.XORKeyStream(cipherText, plainText)
+	return encode(cipherText), nil
 }
 
-func main() {
-	// This will successfully encrypt & decrypt
-	ciphertext1 := encrypt("This is some sensitive information")
-	fmt.Printf("Encrypted ciphertext 1: %x \n", ciphertext1)
-
-	plaintext1 := decrypt(ciphertext1)
-	fmt.Printf("Decrypted plaintext 1: %s \n", plaintext1)
-
-	// This will successfully encrypt & decrypt as well.
-	ciphertext2 := encrypt("Hello")
-	fmt.Printf("Encrypted ciphertext 2: %x \n", ciphertext2)
-
-	plaintext2 := decrypt(ciphertext2)
-	fmt.Printf("Decrypted plaintext 2: %s \n", plaintext2)
+// Decrypt method is to extract back the encrypted text
+func Decrypt(text string) (string, error) {
+	block, err := aes.NewCipher([]byte(secretKey))
+	if err != nil {
+		return "", err
+	}
+	cipherText := decode(text)
+	cfb := cipher.NewCFBDecrypter(block, bytes)
+	plainText := make([]byte, len(cipherText))
+	cfb.XORKeyStream(plainText, cipherText)
+	return string(plainText), nil
 }
+
+// func main() {
+// 	StringToEncrypt := "Encrypting this string"
+// 	// To encrypt the StringToEncrypt
+// 	encText, err := encrypt(StringToEncrypt, secretKey)
+// 	if err != nil {
+// 		fmt.Println("error encrypting your classified text: ", err)
+// 	}
+// 	fmt.Println(encText)
+// 	// To decrypt the original StringToEncrypt
+// 	decText, err := decrypt("Li5E8RFcV/EPZY/neyCXQYjrfa/atA==", secretKey)
+// 	if err != nil {
+// 		fmt.Println("error decrypting your encrypted text: ", err)
+// 	}
+// 	fmt.Println(decText)
+// }
