@@ -87,20 +87,25 @@ func (s *accountServer) GenerateCredentials(ctx context.Context, req *pb.Generat
 	secretKey := auth.GenerateSecretKey()
 	accountID := req.GetAccountId()
 
+	encryptedSecretKey, err := utils.Encrypt(secretKey)
+	if err != nil {
+		return nil, err
+	}
+
 	account := &models.Account{
 		ID: accountID,
 		Credentials: models.Credentials{
-			SecretKey: utils.Encrypt(secretKey),
+			SecretKey: encryptedSecretKey,
 		},
 	}
 
-	err := accountStore.UpdateAccountCredentials(account)
+	err = accountStore.UpdateAccountCredentials(account)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.GenerateCredentialsResponse{
-		ApiKey: accountID,
+		ApiKey:    accountID,
 		SecretKey: secretKey,
 	}, nil
 }

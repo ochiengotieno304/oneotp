@@ -80,7 +80,11 @@ func (store *otpStore) UpdateOne(id string) error { // update only used state
 		}},
 	}
 
-	_, err = store.collection.UpdateOne(context.TODO(), filter, update)
+	_, err = store.collection.UpdateOne(
+		context.TODO(),
+		filter,
+		update,
+	)
 	if err != nil {
 		return err
 	}

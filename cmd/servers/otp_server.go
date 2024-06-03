@@ -27,13 +27,22 @@ var otpStore = stores.NewOTPStore()
 
 func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (*pb.RequestOTPResponse, error) {
 	phone := req.GetPhone()
-	otp := strings.Join(utils.GenerateOTP(), "")
+	otpCode := strings.Join(utils.GenerateOTP(), "")
 	after := time.Now().Add(15 * time.Minute)
 	var clientID []string = ctx.Value("clientID").([]string)
 
+	code, err := utils.Encrypt(otpCode)
+	if err != nil {
+		return nil, err
+	}
+	phoneEncrpted, err := utils.Encrypt(phone)
+	if err != nil {
+		return nil, err
+	}
+
 	otpID, err := otpStore.CreateOTP(&models.OTP{
-		Code:      utils.Encrypt(otp),
-		Phone:     utils.Encrypt(phone),
+		Code:      code,
+		Phone:     phoneEncrpted,
 		ExpiresAt: after,
 		Used:      false,
 		ClientID:  clientID[0],
@@ -43,30 +52,54 @@ func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (
 		return nil, err
 	}
 
-	message := fmt.Sprintf("Your OTP code is %s, valid 15 minutes", otp) // send verification sms
+	// encrypt data
+	data := fmt.Sprintf("%s|%s|%s", fmt.Sprintf("%v", otpID.(primitive.ObjectID).Hex()), phone, otpCode) //ID|Phone|Code
+	encrypted, err := utils.Encrypt(data)
+	if err != nil {
+		return nil, fmt.Errorf("error requesting otp: %v", err)
+	}
 
+	// send otp sms
+	message := fmt.Sprintf("Your OTP code is %s, valid 15 minutes", otpCode)
 	go sms.SendSMS(message, phone)
 
 	return &pb.RequestOTPResponse{
-		Id: fmt.Sprintf("%v", otpID.(primitive.ObjectID).Hex()),
+		Id: encrypted,
 	}, nil
-
 }
 
 func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
-	phone := req.GetPhone()
-	otpID := req.GetId()
-	otpCode := req.GetCode()
 	var reason string
+	otpID := req.GetId()
 
-	otp, err := otpStore.FindOne(otpID)
+	decrypted, err := utils.Decrypt(otpID)
+	if err != nil {
+		return nil, fmt.Errorf("error verifying otp: %v", err)
+	}
+	fmt.Println(decrypted)
+
+	info := strings.Split(decrypted, "|")
+	fmt.Println(info)
+
+
+	otp, err := otpStore.FindOne(info[0])
+	if err != nil {
+		return nil, err
+	}
+
+	code, err := utils.Decrypt(otp.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	phone, err := utils.Decrypt(otp.Phone)
 	if err != nil {
 		return nil, err
 	}
 
 	verifyExpired := time.Now().Before(otp.ExpiresAt)
-	verifyCode := otpCode == utils.Decrypt(otp.Code)
-	verifyPhone := phone == utils.Decrypt(otp.Phone)
+	verifyPhone := info[1] == phone
+	verifyCode := info[2] == code
 	verifyUsed := otp.Used
 
 	if !verifyExpired {
@@ -80,7 +113,7 @@ func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*p
 	}
 
 	if !verifyUsed {
-		err = otpStore.UpdateOne(otpID)
+		err = otpStore.UpdateOne(info[0])
 		if err != nil {
 			return nil, err
 		}
