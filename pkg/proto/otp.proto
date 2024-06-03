@@ -16,13 +16,13 @@ message RequestOTPRequest {
 }
 
 message RequestOTPResponse {
-  string id = 1;
+  string ref = 1;
 }
 
 message VerifyOTPRequest {
-  string phone = 1;
+  string ref = 1;  
   string code = 2;
-  string id = 3;  
+  string phone = 3;
 }
 
 message VerifyOTPResponse {

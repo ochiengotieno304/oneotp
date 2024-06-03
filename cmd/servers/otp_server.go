@@ -64,24 +64,21 @@ func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (
 	go sms.SendSMS(message, phone)
 
 	return &pb.RequestOTPResponse{
-		Id: encrypted,
+		Ref: encrypted,
 	}, nil
 }
 
 func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
 	var reason string
-	otpID := req.GetId()
+	otpID := req.GetRef()
 	var clientID []string = ctx.Value("clientID").([]string)
 
 	decrypted, err := utils.Decrypt(otpID)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying otp: %v", err)
 	}
-	fmt.Println(decrypted)
 
 	info := strings.Split(decrypted, "|")
-	fmt.Println(info)
-
 	otp, err := otpStore.FindOne(info[0], clientID[0])
 	if err != nil {
 		return nil, err
