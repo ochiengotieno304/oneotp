@@ -18,6 +18,10 @@ var (
 	Verified Status = Status{
 		Code: 200,
 	}
+
+	Revoked Status = Status{
+		Code: 300,
+	}
 )
 
 type Account struct {

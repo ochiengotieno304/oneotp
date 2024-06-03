@@ -24,13 +24,17 @@ func NewAccountServer() *accountServer {
 
 var accountStore = stores.NewAccountStore()
 
-func validatePassword(password string, altPassword string) bool {
+func validatePassword(password, altPassword string) bool {
 	return password == altPassword
 }
 
 func validateEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
+}
+
+func validateAccountPresent(email string) bool {
+	return accountStore.FindAccountByEmail(email) == nil
 }
 
 func (s *accountServer) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
@@ -50,6 +54,10 @@ func (s *accountServer) CreateAccount(ctx context.Context, req *pb.CreateAccount
 
 	if !validateEmail(email) {
 		return nil, fmt.Errorf("invalid email address")
+	}
+
+	if validateAccountPresent(email) {
+		return nil, fmt.Errorf("account with that email already exists")
 	}
 
 	if !validatePassword(password, altPassword) {

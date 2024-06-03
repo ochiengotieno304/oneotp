@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	config "github.com/ochiengotieno304/oneotp/internal/configs"
 	"github.com/ochiengotieno304/oneotp/internal/utils"
+	"github.com/ochiengotieno304/oneotp/internal/utils/errors"
 	"github.com/ochiengotieno304/oneotp/pkg/db/stores"
 )
 
@@ -59,9 +59,14 @@ func ValidateRequest(clientID, secret string) error {
 	}
 
 	verifySecret := secret == decreptedKey
+	unverified := account.Status != 200 // status 100 for unverified accounts, 200 for verified, 300 for revoked
+
 	if !verifySecret {
-		return fmt.Errorf("error verifying secret_key")
+		return errors.ErrSecretVerification
 	}
 
+	if unverified {
+		return errors.ErrUnverifiedAccount
+	}
 	return nil
 }
