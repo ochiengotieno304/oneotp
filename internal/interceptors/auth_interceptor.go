@@ -56,9 +56,11 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
 			}
 		}
 
-		err := auth.ValidateRequest(clientID[0], secret[0])
-		if err != nil {
-			return nil, err
+		if requireClientID && requireSecret {
+			err := auth.ValidateRequest(clientID[0], secret[0])
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		ctx = context.WithValue(ctx, `secretKey`, secret)
