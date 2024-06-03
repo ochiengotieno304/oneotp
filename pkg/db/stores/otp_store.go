@@ -12,8 +12,8 @@ import (
 
 type AuthStore interface {
 	CreateOTP(otp *models.OTP) (interface{}, error)
-	FindOne(id string) (*models.OTP, error)
-	UpdateOne(id string) error
+	FindOne(id, clientID string) (*models.OTP, error)
+	UpdateOne(id, clientID string) error
 }
 
 type otpStore struct {
@@ -45,7 +45,7 @@ func (store *otpStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 	return result.InsertedID, nil
 }
 
-func (store *otpStore) FindOne(id string) (*models.OTP, error) {
+func (store *otpStore) FindOne(id, clientID string) (*models.OTP, error) {
 	var otp *models.OTP
 
 	objID, err := primitive.ObjectIDFromHex(id)
@@ -53,7 +53,13 @@ func (store *otpStore) FindOne(id string) (*models.OTP, error) {
 		return nil, err
 	}
 
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{
+		{Key: "$and", Value: []interface{}{
+			bson.D{{Key: "client_id", Value: clientID}},
+			bson.D{{Key: "_id", Value: objID}},
+		}},
+	}
+
 	err = store.collection.FindOne(
 		context.TODO(),
 		filter,
@@ -66,13 +72,18 @@ func (store *otpStore) FindOne(id string) (*models.OTP, error) {
 	return otp, nil
 }
 
-func (store *otpStore) UpdateOne(id string) error { // update only used state
+func (store *otpStore) UpdateOne(id, clientID string) error { // update only used state
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
 
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{
+		{Key: "$and", Value: []interface{}{
+			bson.D{{Key: "client_id", Value: clientID}},
+			bson.D{{Key: "_id", Value: objID}},
+		}},
+	}
 
 	update := bson.D{
 		{Key: "$set", Value: bson.D{

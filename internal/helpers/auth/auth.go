@@ -1,10 +1,13 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	config "github.com/ochiengotieno304/oneotp/internal/configs"
+	"github.com/ochiengotieno304/oneotp/internal/utils"
+	"github.com/ochiengotieno304/oneotp/pkg/db/stores"
 )
 
 func GenerateToken(accountID string) (string, error) {
@@ -40,4 +43,25 @@ func GenerateToken(accountID string) (string, error) {
 	}
 
 	return ss, nil
+}
+
+func ValidateRequest(clientID, secret string) error {
+	accountStore := stores.NewAccountStore()
+
+	account, err := accountStore.FindAccountByID(clientID)
+	if err != nil {
+		return err
+	}
+
+	decreptedKey, err := utils.Decrypt(account.Credentials.SecretKey)
+	if err != nil {
+		return err
+	}
+
+	verifySecret := secret == decreptedKey
+	if !verifySecret {
+		return fmt.Errorf("error verifying secret_key")
+	}
+
+	return nil
 }

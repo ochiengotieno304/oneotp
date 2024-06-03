@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ochiengotieno304/oneotp/internal/helpers/auth"
 	"github.com/ochiengotieno304/oneotp/internal/utils/errors"
 
 	"google.golang.org/grpc"
@@ -39,12 +40,25 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
 			if clientID == nil {
 				return nil, errors.ErrMissingClientID
 			}
+
+			if clientID[0] == "" {
+				return nil, errors.ErrBlankClientID
+			}
 		}
 
 		if requireSecret {
 			if secret == nil {
 				return nil, errors.ErrMissingSecret
 			}
+
+			if secret[0] == "" {
+				return nil, errors.ErrBlankSecretKey
+			}
+		}
+
+		err := auth.ValidateRequest(clientID[0], secret[0])
+		if err != nil {
+			return nil, err
 		}
 
 		ctx = context.WithValue(ctx, `secretKey`, secret)
