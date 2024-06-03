@@ -14,7 +14,7 @@ import (
 
 type AccountStore interface {
 	CreateAccount(account *models.Account) (interface{}, error)
-	FindAccountByEmail(email string) (*models.Account, error)
+	FindAccountByEmail(email string) error
 	FindAccountByID(id string) (*models.Account, error)
 	UpdateAccountCredentials(account *models.Account) error
 	DeleteOneAccount(id string) error
@@ -72,15 +72,13 @@ func (store *accountStore) FindAccountByID(id string) (*models.Account, error) {
 	return account, nil
 }
 
-func (store *accountStore) FindAccountByEmail(email string) (*models.Account, error) {
-	var account *models.Account
+func (store *accountStore) FindAccountByEmail(email string) error {
 	filter := bson.D{{Key: "email", Value: email}}
-	err := store.collection.FindOne(context.TODO(), filter).Decode(&account)
-	if err != nil {
-		return nil, err
+	if err := store.collection.FindOne(context.TODO(), filter).Err(); err != nil {
+		return err
 	}
-
-	return account, nil
+	
+	return nil
 }
 
 func (store *accountStore) UpdateAccountCredentials(account *models.Account) error {
