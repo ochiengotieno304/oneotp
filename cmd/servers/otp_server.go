@@ -31,6 +31,7 @@ func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (
 	after := time.Now().Add(15 * time.Minute)
 	var clientID []string = ctx.Value("clientID").([]string)
 
+	// encrypt data before storage
 	code, err := utils.Encrypt(otpCode)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (
 		Code:      code,
 		Phone:     phoneEncrpted,
 		ExpiresAt: after,
-		Used:      false,
+		Attempts:  0,
 		ClientID:  clientID[0],
 	})
 
@@ -52,34 +53,24 @@ func (s *otpServer) RequestOTP(ctx context.Context, req *pb.RequestOTPRequest) (
 		return nil, err
 	}
 
-	// encrypt data
-	data := fmt.Sprintf("%s|%s|%s", fmt.Sprintf("%v", otpID.(primitive.ObjectID).Hex()), phone, otpCode) //ID|Phone|Code
-	encrypted, err := utils.Encrypt(data)
-	if err != nil {
-		return nil, fmt.Errorf("error requesting otp: %v", err)
-	}
-
 	// send otp sms
 	message := fmt.Sprintf("Your OTP code is %s, valid 15 minutes", otpCode)
 	go sms.SendSMS(message, phone)
 
 	return &pb.RequestOTPResponse{
-		Ref: encrypted,
+		Ref: otpID.(primitive.ObjectID).Hex(),
 	}, nil
 }
 
 func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*pb.VerifyOTPResponse, error) {
 	var reason string
 	otpID := req.GetRef()
+	codeFromRequest := req.GetCode()
+	phoneFromRequest := req.GetPhone()
+
 	var clientID []string = ctx.Value("clientID").([]string)
 
-	decrypted, err := utils.Decrypt(otpID)
-	if err != nil {
-		return nil, fmt.Errorf("error verifying otp: %v", err)
-	}
-
-	info := strings.Split(decrypted, "|")
-	otp, err := otpStore.FindOne(info[0], clientID[0])
+	otp, err := otpStore.FindOne(otpID, clientID[0])
 	if err != nil {
 		return nil, err
 	}
@@ -94,30 +85,37 @@ func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*p
 		return nil, err
 	}
 
-	verifyExpired := time.Now().Before(otp.ExpiresAt)
-	verifyPhone := info[1] == phone
-	verifyCode := info[2] == code
-	verifyUsed := otp.Used
+	expired := time.Now().After(otp.ExpiresAt) || otp.Expired
+	notPhone := phoneFromRequest != phone
+	notCode := codeFromRequest != code
+	exceededAttempts := otp.Attempts == 3
 
-	if !verifyExpired {
+	if expired {
 		reason = "verification code expired"
-	} else if verifyUsed {
-		reason = "code already used"
-	} else if !verifyPhone || !verifyCode {
+	} else if exceededAttempts {
+		reason = "max attempts reached, please request a new otp"
+	} else if notPhone && notCode {
 		reason = "invalid verification code provided"
 	} else {
 		reason = "none"
 	}
 
-	if !verifyUsed {
-		err = otpStore.UpdateOne(info[0], clientID[0])
+	if !exceededAttempts {
+		err = otpStore.UpdateOne(otpID, clientID[0], 1) // increament attempsts
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !expired && !notCode && !notPhone && !exceededAttempts {
+		err = otpStore.UpdateOne(otpID, clientID[0], 2) // expire otp after verifiction
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &pb.VerifyOTPResponse{
-		Success: verifyExpired && verifyCode && verifyPhone && !verifyUsed,
+		Success: !expired && !notCode && !notPhone && !exceededAttempts,
 		Reason:  reason,
 	}, nil
 }

@@ -2,38 +2,32 @@ package main
 
 import (
 	"log"
-	"net"
+	"sync"
 
+	"github.com/ochiengotieno304/oneotp/cmd/handlers"
 	"github.com/ochiengotieno304/oneotp/cmd/servers"
-	"github.com/ochiengotieno304/oneotp/internal/interceptors"
-	"github.com/ochiengotieno304/oneotp/internal/utils"
-	"github.com/ochiengotieno304/oneotp/pkg/pb"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
+func runGrpc(wg *sync.WaitGroup) {
+	defer wg.Done()
+	servers.StartRPC()
+}
+
+func runHttp(wg *sync.WaitGroup) {
+	defer wg.Done()
+	handlers.RunHandlers()
+}
+
 func main() {
-	lis, err := net.Listen("tcp", ":6000")
-	if err != nil {
-		log.Fatalln("Failed to listen:", err)
-	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Server Error:", r)
+		}
+	}()
 
-	accountServer := servers.NewAccountServer()
-	otpServer := servers.NewOTPServer()
-
-	s := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			interceptors.AuthInterceptor(),
-			interceptors.ServerLogInterceptor(utils.InitLogger()),
-		),
-	)
-
-	reflection.Register(s)
-
-	pb.RegisterAccountServiceServer(s, accountServer)
-	pb.RegisterOTPServiceServer(s, otpServer)
-
-	log.Println("Serving gRPC on 0.0.0.0:6000")
-	log.Fatalln(s.Serve(lis))
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go runGrpc(&wg)
+	go runHttp(&wg)
+	wg.Wait()
 }
