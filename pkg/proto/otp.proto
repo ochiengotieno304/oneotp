@@ -33,21 +33,21 @@ message VerifyOTPResponse {
 service OTPService {
   rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
     option (google.api.http) = {
-      post: "/v1/auth/request-otp"
+      post: "/v1/otp/request-otp"
       body: "*"
     };
   }
 
   rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {
     option (google.api.http) = {
-      post: "/v1/auth/verify-otp"
+      post: "/v1/otp/verify-otp"
       body: "*"
     };
   }
 
   rpc ResendOTP(RequestOTPRequest) returns (RequestOTPResponse) {
     option (google.api.http) = {
-      post: "/v1/auth/resend-otp"
+      post: "/v1/otp/resend-otp"
       body: "*"
     };
   }

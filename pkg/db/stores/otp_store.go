@@ -2,6 +2,7 @@ package stores
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ochiengotieno304/oneotp/pkg/db"
 	"github.com/ochiengotieno304/oneotp/pkg/db/models"
@@ -13,12 +14,19 @@ import (
 type AuthStore interface {
 	CreateOTP(otp *models.OTP) (interface{}, error)
 	FindOne(id, clientID string) (*models.OTP, error)
-	UpdateOne(id, clientID string) error
+	UpdateOne(id, clientID string, updateID updateID) error
 }
 
 type otpStore struct {
 	collection *mongo.Collection
 }
+
+type updateID int8
+
+const (
+	updateAttemps updateID = 1
+	updateExpiry  updateID = 2
+)
 
 func NewOTPStore() AuthStore {
 	return &otpStore{
@@ -33,7 +41,8 @@ func (store *otpStore) CreateOTP(otp *models.OTP) (interface{}, error) {
 			{Key: "phone", Value: otp.Phone},
 			{Key: "code", Value: otp.Code},
 			{Key: "expires_at", Value: otp.ExpiresAt},
-			{Key: "used", Value: otp.Used},
+			{Key: "attempts", Value: otp.Attempts},
+			{Key: "expired", Value: otp.Expired},
 			{Key: "client_id", Value: otp.ClientID},
 		},
 	)
@@ -72,11 +81,12 @@ func (store *otpStore) FindOne(id, clientID string) (*models.OTP, error) {
 	return otp, nil
 }
 
-func (store *otpStore) UpdateOne(id, clientID string) error { // update only used state
+func (store *otpStore) UpdateOne(id, clientID string, updateID updateID) error { // updates only used state
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
+	var update primitive.D
 
 	filter := bson.D{
 		{Key: "$and", Value: []interface{}{
@@ -85,10 +95,21 @@ func (store *otpStore) UpdateOne(id, clientID string) error { // update only use
 		}},
 	}
 
-	update := bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "used", Value: true},
-		}},
+	switch updateID {
+	case updateAttemps:
+		update = bson.D{
+			{Key: "$inc", Value: bson.D{
+				{Key: "attempts", Value: 1}},
+			},
+		}
+	case updateExpiry:
+		update = bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "expired", Value: true}},
+			},
+		}
+	default:
+		fmt.Println("do nothing")
 	}
 
 	_, err = store.collection.UpdateOne(
