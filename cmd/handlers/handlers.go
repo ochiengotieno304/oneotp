@@ -13,10 +13,10 @@ import (
 
 func CustomMatcher(key string) (string, bool) {
 	switch key {
-	case "client_d":
-		return key, true
-	case "secret_key":
-		return key, true
+	case "X-Client-Id":
+		return "client_id", true
+	case "X-Secret-Key":
+		return "secret_key", true
 	default:
 		return runtime.DefaultHeaderMatcher(key)
 	}
@@ -41,13 +41,13 @@ func RunHandlers() {
 	// REGISTER GATEWAYS
 	err = pb.RegisterAccountServiceHandler(ctx, gwmux, conn)
 	if err != nil {
-		log.Fatalln("Failed to register otp gateway:", err)
+		log.Fatalln("Failed to register account gateway:", err)
 	}
-	err = pb.RegisterOTPServiceHandler(ctx,gwmux, conn)
+	err = pb.RegisterOTPServiceHandler(ctx, gwmux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register otp gateway:", err)
 	}
-	
+
 	gwServer := &http.Server{
 		Addr:    ":6090",
 		Handler: gwmux,

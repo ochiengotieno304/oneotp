@@ -93,8 +93,8 @@ func (s *otpServer) VerifyOTP(ctx context.Context, req *pb.VerifyOTPRequest) (*p
 	if expired {
 		reason = "verification code expired"
 	} else if exceededAttempts {
-		reason = "max attempts reached, please request a new otp"
-	} else if notPhone && notCode {
+		reason = "exceeded max failed attempts, please request a new otp"
+	} else if notPhone || notCode {
 		reason = "invalid verification code provided"
 	} else {
 		reason = "none"

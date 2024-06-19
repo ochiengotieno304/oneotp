@@ -123,7 +123,7 @@ func RegisterOTPServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/RequestOTP", runtime.WithHTTPPathPattern("/v1/auth/request-otp"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/RequestOTP", runtime.WithHTTPPathPattern("/v1/otp/request"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -148,7 +148,7 @@ func RegisterOTPServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/VerifyOTP", runtime.WithHTTPPathPattern("/v1/auth/verify-otp"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/VerifyOTP", runtime.WithHTTPPathPattern("/v1/otp/verify"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -173,7 +173,7 @@ func RegisterOTPServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/ResendOTP", runtime.WithHTTPPathPattern("/v1/auth/resend-otp"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/otp.proto.OTPService/ResendOTP", runtime.WithHTTPPathPattern("/v1/otp/resend"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -237,7 +237,7 @@ func RegisterOTPServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/RequestOTP", runtime.WithHTTPPathPattern("/v1/auth/request-otp"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/RequestOTP", runtime.WithHTTPPathPattern("/v1/otp/request"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -259,7 +259,7 @@ func RegisterOTPServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/VerifyOTP", runtime.WithHTTPPathPattern("/v1/auth/verify-otp"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/VerifyOTP", runtime.WithHTTPPathPattern("/v1/otp/verify"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -281,7 +281,7 @@ func RegisterOTPServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/ResendOTP", runtime.WithHTTPPathPattern("/v1/auth/resend-otp"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/otp.proto.OTPService/ResendOTP", runtime.WithHTTPPathPattern("/v1/otp/resend"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -301,11 +301,11 @@ func RegisterOTPServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 }
 
 var (
-	pattern_OTPService_RequestOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "auth", "request-otp"}, ""))
+	pattern_OTPService_RequestOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "otp", "request"}, ""))
 
-	pattern_OTPService_VerifyOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "auth", "verify-otp"}, ""))
+	pattern_OTPService_VerifyOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "otp", "verify"}, ""))
 
-	pattern_OTPService_ResendOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "auth", "resend-otp"}, ""))
+	pattern_OTPService_ResendOTP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "otp", "resend"}, ""))
 )
 
 var (
