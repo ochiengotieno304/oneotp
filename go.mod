@@ -15,7 +15,7 @@ require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4d
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
